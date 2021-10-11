@@ -1,0 +1,80 @@
+---
+title: "Exponential growth"
+author: "Chen, Yen-Ting"
+date: "2021/10/5"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#
+
+```{r}
+pacman::p_load(deSolve,
+               tidyr,
+               dplyr,
+               ggplot2)
+```
+
+To analyze models, analytical solutions or numerical solutions could be done.
+
+Analytical solutions can be sought with simply pen and paper; however, with the terms piles up, it would take years to reach the solution.
+Luckily, with technological advancements, numerical solutions can be achieved with computational power. 
+
+
+desolve
+
+1. model specification
+
+During this stage, 
+
+create a function via specific 
+- times (time duration)
+- state (initial conditions)
+- parameters (parameters to be included)
+
+2. model application
+the function `ode` needs 4 argurements for it to work.
+
+```{r}
+# 1. specification
+
+exponential_model <- function(times, state, parms){
+  with(as.list(c(state, parms)), {
+    dN_dt <- r*N # exponential growth equation
+    return(list(c( dN_dt)))
+  })
+}
+
+# 2. application
+
+# set inputs
+times <- seq(0, 10, 0.1)
+state <- c(N = 10)
+parms <- c(r = 1.5)
+
+pop_size<-
+  ode(func = exponential_model, # remember not to include the () after the model
+      times = times,
+      y = state, 
+      parms = parms)
+class(pop_size)
+```
+
+```{r}
+# visualization
+
+ggplot(as.data.frame(pop_size), aes(x = time, y = N)) +
+  geom_point()
+
+ggplot(as.data.frame(pop_size), aes(x = time, y = N)) +
+  geom_point() +
+  scale_x_continuous(limits = c(0, 10.5), expand = c(0, 0)) + # expand = for removing the padding around the main graph
+  scale_y_log10(breaks = scales::trans_breaks("log10", function(x) 10^x)(c(10, 10^7)),
+                labels = scales::trans_format("log10", scales::math_format(10^.x)),
+                expand = c(0,0))
+
+```
+

@@ -1,0 +1,187 @@
+---
+title: "Lecture_2_Assignment"
+author: "Chen, Yen-Ting"
+date: "2021/10/5"
+output:
+  word_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Exponential Population Growth with Constant Immigration
+
+```{r}
+pacman::p_load(dplyr,tidyr,
+               ggplot2,
+               deSolve)
+```
+
+
+## Q1
+
+You are a curious student in the Introduction to Theoretical Ecology course. After the class, you decide to do a small experiment on population growth. You set up a “massive” fish tank and introduce $N_0$ flatworm individuals. Also, each day you add I new individuals into the tank, hoping that the population will increase faster. Assuming that the intrinsic rate of increase is r (per day) and there is no factor limiting the growth and reproduction of these flatworms, the population dynamics can be described by the following differential equation:
+
+\[\frac{dN}{dt} = rN +I\]
+
+The analytical solution to this differential equation is:
+
+\[N = N_0e^{rt} + (e^{rt}-1)\frac{I}{r}\]
+
+Please use what you have learned in the lecture to derive the solution for this differential equation step by step. (You can either write down the answer on a paper and embed a picture of it or directly type the equations in Word.)
+
+### Solution
+
+To find $N_{t}$, I first rearranged the variables and then integrated both sides of the equation.
+
+\[\frac{1}{(rN+I)}~dN = dt\]
+\[\int \frac{1}{(rN+I)}~dN = \int dt\]
+
+For the left hand side, I substituted the $rN+I$ term with $u$ to get a new differentials $du$; for the right hand side, the integration is simply all the increments $dt$ being summed up, thereby $t$; 
+
+\[u = rN+I\]
+\[du = r~dN\]
+\[\int\frac{1}{ru}du = \int dt\]
+
+After the method of substitution and lifting the natural log, the result is clear
+
+\[\frac{1}{r} \ln (rN+I) = t + c\]
+\[rN+I = e^{rt}e^{rc}\]
+
+Rearranging the equation, we can get the equation of population size of all time $t$. 
+
+\[N = (e^{rt}e^{rc}-I)/r\]
+
+Despite the effort for deriving the equation, there is an ambiguous $c$ term in the equation which can not help us generalize the result. To resolve the ambiguity of the result, we can plugin $t = 0$ for calculating the initial condition of the population.
+
+\[\text{Let t = 0}\]
+\[N_{0} = (e^{rc}-I)/r\]
+
+If $N_0$ is a known constant then the ambiguous term $e^{rc}$ is equal to $rN_{0}+I$. After defining all these terms, I can finally close this question by plug in all the terms:
+
+\[N_t = (e^{rt}(rN_{0}+I) - I) / r\]
+
+Rearranging the above equation we can get the solution:
+
+\[N_t = e^{rt}N_{0} + (e^{rt}-1)\frac{I}{r} \]
+
+This equation tells us that the population size $N$ at time $t$ is related to the initial condition $N_0$, the population growth rate $r$, and the constant immigration rate $I$. The behavior of this equation is explored in the subsequent questions. 
+
+P.S. Thanks Chueh-Chen for brushing up my Calculus.
+
+
+## Q2
+
+Suppose that $N_0$ = 10,, $r$ = 1.2, and $I$ = 3. How will the flatworm population change over a week? Solve the differential equation numerically and visualize the population trajectory. Please show the figure along with the R code you used to generate the results.
+
+```{r}
+# set up an equation
+exp_g <- function(time, y, parms){
+  with(as.list(c(parms, y)), {
+    dN_dt <- r*N
+    return(list(c(dN_dt)))
+  })
+    
+  }
+
+time <- seq(0, 30, 0.1)
+y <- c(N = 10)
+parms <- c(r = 1.2,
+           I = 3)
+
+pop_size <-
+  ode(func = exp_g,
+      y = y,
+      times = time,
+      parms = parms)
+head(pop_size)
+```
+
+### Visualization
+
+```{r}
+ggplot(as.data.frame(pop_size), aes(x = time, y = N)) +
+  geom_line(linetype = 2, alpha = 0.3) +
+  geom_point()
+```
+
+## Q3
+
+Compare the population growth with and without constant immigration and explain the model dynamics in your own words. How does the constant immigration term $I$ affect the population dynamics? Do you think your daily addition of new flatworm individuals make a big difference?
+
+```{r}
+# set up an equation
+exp_g <- function(time, y, parms){
+  with(as.list(c(parms, y)), {
+    with_I <- r*N1 + I
+    no_I <- r*N2
+    return(list(c(with_I, no_I)))
+  })
+    
+  }
+
+time <- seq(0, 100, 0.1)
+y <- c(N1 = 10, N2 = 10)
+parms <- c(r = 1.2,
+           I = 3)
+
+pop_size <-
+  ode(func = exp_g,
+      y = y,
+      times = time,
+      parms = parms)
+head(pop_size)
+```
+
+### Visualization
+
+```{r}
+as.data.frame(pop_size) %>% 
+  pivot_longer(cols = c("N1", "N2"), names_to = "variables", values_to = "values") %>% 
+  ggplot(aes(x = time, y = values, color = variables)) +
+  geom_line(linetype = 2, alpha = 0.3) +
+  ylab("Linear scale") +
+  geom_point() +
+  ggtitle("Whole time frame")
+```
+
+Figure 1.
+
+```{r}
+as.data.frame(pop_size) %>% 
+  filter(time <= 5) %>% 
+  pivot_longer(cols = c("N1", "N2"), names_to = "variables", values_to = "values") %>% 
+  ggplot(aes(x = time, y = values, color = variables)) +
+  geom_line(linetype = 2, alpha = 0.3) +
+  ylab("Linear scale") +
+  geom_point()  +
+  ggtitle("Time frame t = 0~5")#+
+  # scale_y_log10()
+```
+figure 
+
+```{r}
+as.data.frame(pop_size) %>% 
+  filter(time >= 95) %>% 
+  pivot_longer(cols = c("N1", "N2"), names_to = "variables", values_to = "values") %>% 
+  ggplot(aes(x = time, y = values, color = variables)) +
+  geom_line(linetype = 2, alpha = 0.3) +
+  ylab("Linear scale") +
+  geom_point() +
+  ggtitle("Time frame t = 95~100")#+
+  # scale_y_log10()
+
+```
+
+### Personal comments
+
+Let's review the equations first.
+The two populations $N_1$ and $N_2$ have the same growth rate and unlimited resources.
+The first population size $N_1$ receives a constant inflow of immigrants $I$ while the second population $N_2$ do not.
+
+\[N_{t1} = e^{rt}N_{0} + (e^{rt}-1)\frac{I}{r}\]
+\[N_{t2} = N_0 e^{rt} \]
+
+The difference of the two equations suggests that $N_1$ will always exceeds $N_2$  $(e^{rt}-1)\frac{I}{r}$ individuals whenever $t >0$. Judging the figures, this observation from the equation is true.  The general pattern of the two models both demonstrate a exponential growth pattern (fig. 1), with the exact value of $N_1$ being "slightly larger" than $N_2$. By judging the visuals of the numerical result, the constant influx contributed by immigration have similar proportions of impacts through different points of time (fig. 2, 3). 
