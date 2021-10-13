@@ -1,0 +1,82 @@
+---
+title: "lecture_3_assignment"
+author: "Chen, Yen-Ting"
+date: "2021/10/12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+pacman::p_load(dplyr, tidyr, ggplot2, deSolve)
+```
+
+
+# Lecture 3 assignment
+
+## Premise 
+Some populations experience negative growth rates when the population size is too low, a phenomenon known as "Allee effect". For example, some flowering plants require a minimal local density to attract pollinators (clustering effects). Below this density, pollinators will not be able to detect the presence of flowers and therefore the plants cannot complete their life cycle. Consider a scenario where the flower species *Itea* requires a minimal population size of $A$ to attract its specialized bee pollinator and its population growth is directly related to pollinator visitation, its population dynamics can be described using the below differential equation:
+
+\[\frac{dN}{dt}=rN(1-\frac{N}{K})(\frac{N}{A}-1)\]
+
+the term $A$ represents “Allee threshold”, below which the population growth rate is negative (because of no visiting pollinators) and thus the population will decline; $r$ is the intrinsic rate of increase and $K$ is the carrying capacity.
+
+### Q1
+
+Find the equilibrium population sizes of *Itea* and use the graphical method to determine their stability.
+
+```{r}
+allee_ode <- function(t, y, p){
+  with(as.list(c(y, p)),{
+    dN_dt <- r * N * (1-N/K) * (N/A-1)
+    return(list(dN_dt))
+  })
+}
+
+t <- seq(0,20,0.1)
+y <- c(N = 100)
+p <- c(r = 1.3, K = 200, A = 8)
+
+output <- 
+  ode(func = allee_ode,
+      times = t,
+      y = y,
+      parms = p)
+
+# create allee effect function with arbitrary parameters
+allee <- function(N, r = 1.2, K = 140, A = 40) r * N * (1-N/K) * (N/A-1)
+
+ggplot(data = data.frame(x = seq(-10, 150, by = 0.1)), aes(x = x)) +
+  stat_function(fun = allee, color = "red", size = 1.5) +
+  geom_hline(yintercept = 0, color = "black") +
+  theme_bw()+
+  scale_x_continuous(expand = c(0,0)) +
+  xlab("N") +
+  ylab(frac("df", "dN"))
+  expression(df %/%dN)
+  #ylab(df%/%dN))
+  #xlim = c(-10, 200) +
+  #ylim(c(-10, 200))
+
+```
+
+### Q2
+
+Use local stability analysis to determine the stability of the equilibrium population sizes and confirm your results in question 1. 
+
+
+```{r}
+
+```
+
+### Q3
+
+
+Previous studies on the basic biology of *Itea* have shown that its intrinsic rate of increase $r$ is 1.2, the carrying capacity $K$ is 1000, and the minimal threshold density A is 150. Solve the differential equation numerically and provide a figure(s) of population trajectories showing how different initial population sizes may arrive at different equilibrium population sizes (a phenomenon known as “alternative stable states”). Please include the R code you used to generate the results.
+
+```{r}
+
+```
+

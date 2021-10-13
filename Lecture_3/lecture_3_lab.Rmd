@@ -1,0 +1,51 @@
+---
+title: "lecture_3_lab"
+author: "Chen, Yen-Ting"
+date: "2021/10/12"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+pacman::p_load(tidyr, dplyr, ggplot2,
+               deSolve)
+```
+
+# Recreate a logistic growth curve
+
+```{r}
+log_growth <- function(time, state, parms) {
+  with(as.list(c(state, parms)),{
+    dN_dt = r * N * (1-N/K)
+    return(list(c(dN_dt)))
+  })
+}
+```
+
+
+listing arguements
+
+```{r}
+time <- seq(from = 0, to = 15, by = 0.1)
+state <- c(N = 150)
+parms  <- c(r = 1.2, 
+            K = 300)
+
+q <-
+  ode(func = log_growth,
+      times = time,
+      y = state,
+      parms = parms) %>% as.data.frame()
+```
+
+
+```{r}
+ggplot(q) +
+  geom_point(aes(x = time, y = N))
+
+```
+
