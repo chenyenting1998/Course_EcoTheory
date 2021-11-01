@@ -1,0 +1,91 @@
+---
+title: "lab_5"
+author: "Chen, Yen-Ting"
+date: "2021/10/26"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+pacman::p_load(dplyr, tidyr, ggplot2)
+```
+
+# Lab 5 -- Leslie matrices and models
+
+```{r}
+# growth
+row1 <- c(0,     0,    0,     0,     0,    0)
+row2 <- c(0.966, 0,    0,     0,     0,    0)
+row3 <- c(0,     0.01, 0,     0,     0,    0)
+row4 <- c(0,     0,    0.125, 0,     0,    0)
+row5 <- c(0,     0,    0,     0.245, 0,    0)
+row6 <- c(0,     0,    0,     0,     0.75, 0)
+
+grow <- rbind(row1, row2, row3, row4, row5, row6)
+
+# self survival
+row1 <- c(0, 0, 0,     0,     0,     0)
+row2 <- c(0, 0, 0,     0,     0,     0)
+row3 <- c(0, 0, 0.125, 0,     0,     0)
+row4 <- c(0, 0, 0,     0.238, 0,     0)
+row5 <- c(0, 0, 0,     0,     0.167, 0)
+row6 <- c(0, 0, 0,     0,     0,     0)
+  
+surv <- rbind(row1, row2, row3, row4, row5, row6)
+
+# fecundity
+row1 <- c(0, 0, 0, 0, 0, 322.38)
+row2 <- c(0, 0, 0, 0, 0, 0)
+row3 <- c(0, 0, 0, 0, 0, 3.448)
+row4 <- c(0, 0, 0, 0, 0, 30.17)
+row5 <- c(0, 0, 0, 0, 0, 0.862)
+row6 <- c(0, 0, 0, 0, 0, 0)
+
+fecu <- rbind(row1, row2, row3, row4, row5, row6)
+
+# skip stage
+row1 <- c(0,     0, 0, 0,  0, 0)
+row2 <- c(0,     0, 0, 0,  0, 0)
+row3 <- c(0.013, 0, 0, 0,  0, 0)
+row4 <- c(0.007, 0, 0, 0,  0, 0)
+row5 <- c(0.008, 0, 0.023, 0, 0, 0)
+row6 <- c(0,     0, 0, 0,  0, 0)
+
+skip <- rbind(row1, row2, row3, row4, row5, row6)
+
+L <- grow+surv+fecu+skip
+
+# lambda 1
+eigen(L)$values %>% Re %>% max
+```
+
+
+Numerical analysis
+
+```{r}
+n0 <- 10
+time <- 50
+
+pop <- data.frame(time = 1:time,
+                  D1 = n0, 
+                  D2 = n0, 
+                  SR = n0,
+                  MR = n0, 
+                  LR = n0, 
+                  FP = n0)
+
+for (i in 2:time) {
+  pop[i, c(-1)] <- L %*% pop[i-1, c(-1)]
+}
+
+L %*% pop[2, -1]
+```
+
+
+```{r}
+eigen()
+```
+

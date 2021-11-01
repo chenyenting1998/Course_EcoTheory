@@ -2,7 +2,9 @@
 title: "lecture_3_assignment"
 author: "Chen, Yen-Ting"
 date: "2021/10/12"
-output: html_document
+output:
+  word_document: default
+  html_document: default
 ---
 
 ```{r setup, include=FALSE}
@@ -23,9 +25,132 @@ Some populations experience negative growth rates when the population size is to
 
 the term $A$ represents “Allee threshold”, below which the population growth rate is negative (because of no visiting pollinators) and thus the population will decline; $r$ is the intrinsic rate of increase and $K$ is the carrying capacity.
 
-### Q1
+## Q1
 
 Find the equilibrium population sizes of *Itea* and use the graphical method to determine their stability.
+
+### Solution
+
+The equilibrium of population is defined as no further changes of the population size (i.e., $\frac{dN}{dt} = 0$). As the rate of change of the population size is defined as the following equation:
+
+\[\frac{dN}{dt}=rN(1-\frac{N}{K})(\frac{N}{A}-1)\]
+
+We can find the population size at equilibrium $N^*$ when the rate of change is zero:
+
+\[rN^*(1-\frac{N^*}{K})(\frac{N^*}{A}-1) = 0\]
+
+Judging the above equation, we can get the equilibria population size $N^* = 0, K, A$. 
+
+The graphical representation was drawn in figure 1. The parameters $r$, $K$, and $A$ were arbitrarily set to be 1.2, 140, and 40 respectively. The x axis is the population size while the y axis is the instantaneous rate of change at the corresponding population size (denoted as $\frac{df}{dN}$ where $f = \frac{dN}{dt}$). The red areas with the plus signs represent the population increase while blue areas with the minus signs represent population decrease; the colored arrows represents the direction of population increase under certain population sizes. The red points on the x axis represent the stable equilibrium while the blue point represents the unstable equilibrium.
+
+Briefly summing up the information of the figure, the stable equilibria has positive growth rates on their right and negative growth rates on their left (as indicated by the colored arrows). On the other hand, an inversed relationship can be observed in the unstable equilibria, where the equilibria has a negative growth rate on its right and a positive growth rate on its left (figure 1).  
+
+```{r}
+# create allee effect function with arbitrary parameters
+allee <- function(N, r = 1.2, K = 140, A = 40) r * N * (1-N/K) * (N/A-1)
+
+# set up plotting data frames
+area_sign <- data.frame(x = c(-14, 18, 100, 150),
+                        y = c(10, -5,  25, -15),
+                        sign = c("+", "-", "+", "-"))
+
+p_direction <- data.frame(x =    c(-15, 45, 70, 95, 120), 
+                          xend = c(-5, 55, 80, 105, 130),
+                          y = 0,
+                          yend =0)
+
+n_direction <- data.frame(x =    c(30, 155), 
+                          xend = c(20, 145),
+                          y = 0,
+                          yend =0)
+
+equi <- data.frame(x = c(0, 40, 140),
+                   y = c(0,0,0),
+                   sign = c("+", "-", "+"))
+
+# plotting the result
+
+ggplot(data = data.frame(x = seq(-20, 155, by = 0.1)), aes(x = x)) +
+  
+  # areas
+  stat_function(fun = allee, fill = "red", alpha = 0.3, xlim = c(-20, 0), geom = "area") +
+  stat_function(fun = allee, fill = "blue", alpha = 0.3, xlim = c(0, 40), geom = "area") +
+  stat_function(fun = allee, fill = "red", alpha = 0.3, xlim = c(40, 140), geom = "area") +
+  stat_function(fun = allee, fill = "blue", alpha = 0.3, xlim = c(140, 155), geom = "area") +
+  
+  # curves and lines
+  stat_function(fun = allee, color = "black", size = 1.2) +
+  geom_hline(yintercept = 0, color = "black") +
+  
+  # + - signs
+  geom_label(data = area_sign, aes(x = x, y = y, label = sign, color = sign), ) +
+  scale_color_manual(values = c("+" = "red", "-"= "blue")) +
+  
+  # arrows of direction
+  geom_segment(data = p_direction, aes(x = x, xend = xend, y = y, yend = yend), 
+               arrow = arrow(), 
+               size = 2,
+               color = "red") + # pointing right
+  geom_segment(data = n_direction, aes(x = x, xend = xend, y = y, yend = yend), 
+               arrow = arrow(), 
+               size = 2,
+               color = "blue") + # pointing right
+
+  
+  # points
+  geom_point(data = equi, aes(x = x, y = y), size = 6.5) + # shade
+  geom_point(data = equi, aes(x = x, y = y, color = sign), size = 5) + # filled color
+  scale_color_manual(values = c("+" = "red", "-" = "blue")) +
+  
+  # themes
+  theme_bw()+
+  scale_x_continuous(expand = c(0,0)) +
+  xlab("N") +
+  ylab("df/dN") 
+```
+
+Figure 1.
+
+
+## Q2
+
+Use local stability analysis to determine the stability of the equilibrium population sizes and confirm your results in question 1. 
+
+### Solution
+
+In question 1, we have known that \[f(N) = \frac{dN}{dt} = rN(1-\frac{N}{K})(\frac{N}{A}-1)\], where the population equilibria $N^* = 0,~A,~K$. To check the stability of each equilibrium, I can test how will the population react if there is a subtle change in the population size at equilibrium.
+
+This idea can be conceptualize as me introducing an error term that moves the population size away from the equilibrium, and this idea can be translated into a mathematical equation:
+
+\[f(N^* + \epsilon) = f(N^*) + \epsilon f'(N^*) + \theta (\epsilon)^2\],
+
+where $f(N)$ is $\frac{dN}{dt}$; $\epsilon$ is the induced change. On the right hand side is the Taylor series for estimating $f(N^* + \epsilon)$. Note that $f(N^*) = 0$ and the higher order terms of the Taylor series are too small to impact the result; therefore, the two terms can be ignored. After that, the equation can be written as follow:
+
+\[f(N^* + \epsilon) = f'(N^*) \times \epsilon\]. 
+
+Verbalizing this equation, we can get that the population growth over time with an addition of little individuals at equilibrium equals those little individuals times the population growth rate with respect to the population size at equilibrium. In other words, it is testing whether $\epsilon$ will grow or shrink when it is introduced. Further than that, such change can occur when $\epsilon$ is extremely small. We can therefore transform the above equation by letting $\epsilon \to 0$ into the following:
+
+\[\frac{d\epsilon}{dt} = f'(N^*) \times \epsilon\], where $f'(N^*)$ is the rate of change for $\epsilon$. If $f'(N^*)$ is smaller than zero, $\epsilon$ will shrink and the population size will go back to equilibrium; if $f'(N^*)$ is larger than zero, $\epsilon$ will expand and the population size will leave the equilibrium.
+
+After all these derivation, it is clear that the evaluation of $f'(N^*)$ at all $N^*$ will give us the result. Using the product rule to the equation in Q1, we can get the following:
+
+\[f'(N) = r(1-\frac{N}{K})(\frac{N}{A}-1) + rN(-\frac{1}{K}) + rN(1-\frac{N}{K})(\frac{1}{A})\]
+
+After plugging in $N = 0,~A,~K$, we finally arrived to the results of local stability analysis:
+
+\[f'(0) = -r\] where $f'(0)$ is negative due to $-r$ is smaller than zero, therefore the population is stable when $N = 0$;
+
+\[f'(A) = rA(1-\frac{A}{K})(\frac{1}{A})\] where $f'(A)$ is positive due to all of the terms are larger than zero, therefore the population is unstable when $N = A$;
+
+
+\[f'(K) = rK(-\frac{1}{K})(\frac{K}{A}-1))\] where $f'(K)$ is negative due to $-\frac{1}{K}$ is smaller than zero while the other two terms are not, therefore the population is unstable when $N = A$.
+
+
+## Q3
+
+Previous studies on the basic biology of *Itea* have shown that its intrinsic rate of increase $r$ is 1.2, the carrying capacity $K$ is 1000, and the minimal threshold density $A$ is 150. Solve the differential equation numerically and provide a figure(s) of population trajectories showing how different initial population sizes may arrive at different equilibrium population sizes (a phenomenon known as “alternative stable states”). Please include the R code you used to generate the results.
+
+### Solution
 
 ```{r}
 allee_ode <- function(t, y, p){
@@ -35,48 +160,30 @@ allee_ode <- function(t, y, p){
   })
 }
 
-t <- seq(0,20,0.1)
-y <- c(N = 100)
-p <- c(r = 1.3, K = 200, A = 8)
+t <- seq(0,10,0.1)
+p <- c(r = 1.2, K = 1000, A = 150)
 
-output <- 
-  ode(func = allee_ode,
-      times = t,
-      y = y,
-      parms = p)
+ode_result <- NULL
 
-# create allee effect function with arbitrary parameters
-allee <- function(N, r = 1.2, K = 140, A = 40) r * N * (1-N/K) * (N/A-1)
+for (i in seq(0, 1200, 1)) {
+  y <- c(N = i)
+  
+  output <- 
+    ode(func = allee_ode,
+        times = t,
+        y = y,
+        parms = p)
+  
+  ode_result <- rbind(ode_result, data.frame(output, N0 = as.character(i)))
+}
 
-ggplot(data = data.frame(x = seq(-10, 150, by = 0.1)), aes(x = x)) +
-  stat_function(fun = allee, color = "red", size = 1.5) +
-  geom_hline(yintercept = 0, color = "black") +
-  theme_bw()+
-  scale_x_continuous(expand = c(0,0)) +
-  xlab("N") +
-  ylab(frac("df", "dN"))
-  expression(df %/%dN)
-  #ylab(df%/%dN))
-  #xlim = c(-10, 200) +
-  #ylim(c(-10, 200))
 
+ggplot(ode_result) +
+  geom_line(aes(x = time, y = N, color = N0))+
+  theme_bw() +
+  theme(legend.position = "none") 
 ```
 
-### Q2
+Figure 2.
 
-Use local stability analysis to determine the stability of the equilibrium population sizes and confirm your results in question 1. 
-
-
-```{r}
-
-```
-
-### Q3
-
-
-Previous studies on the basic biology of *Itea* have shown that its intrinsic rate of increase $r$ is 1.2, the carrying capacity $K$ is 1000, and the minimal threshold density A is 150. Solve the differential equation numerically and provide a figure(s) of population trajectories showing how different initial population sizes may arrive at different equilibrium population sizes (a phenomenon known as “alternative stable states”). Please include the R code you used to generate the results.
-
-```{r}
-
-```
-
+The numerical result is done by applying a sequence of initial values to find equilibria; the result is shown in figure 2 with the x axis as the time sequence and y value as the population size. The initial values starts from 0 to 1200 with a interval of 1. The result shows that there are three equilibria within the given initial values with the three values are 0, 150 and 1000 respectively. These equilibria coincides the above analytical solution 0, $A$, and $K$.

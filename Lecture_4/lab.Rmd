@@ -1,0 +1,76 @@
+---
+title: "Lec_4"
+author: "Chen, Yen-Ting"
+date: "2021/10/19"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r}
+pacman::p_load(dplyr, tidyr, ggplot2, deSolve)
+```
+
+# Discrete models
+
+```{r}
+dF_dN1 <- function(N, r = 0.5, k = 500) N * (1 + r * (1 - (N / k)))
+dF_dN2 <- function(N, r = 1.5, k = 500) N * (1 + r * (1 - (N / k)))
+
+equilibrium <- function(N) N
+```
+
+
+```{r}
+k = 200
+time = 25 # end time
+N <- 10 # setting initial population
+
+# set up data frame
+pop_data <- data.frame(time = 1:time, 
+                       r_0.5 = N, 
+                       r_1.5 = N, 
+                       r_1.8 = N)
+
+discrete_log <- function(N, r) N * (1 + r * (1 - (N / k)))
+
+for(i in 2:time) {
+  pop_data[i, 2] <-  discrete_log(pop_data[i-1, 2], r = 0.5)
+  pop_data[i, 3] <-  discrete_log(pop_data[i-1, 2], r = 1.5)
+  pop_data[i, 4] <-  discrete_log(pop_data[i-1, 2], r = 1.8)
+}
+
+head(pop_data)
+```
+
+```{r}
+pop_data %>% 
+  pivot_longer(cols = c("r_0.5", "r_1.5", "r_1.8"), names_to = "rate", values_to = "N") %>%
+  ggplot(aes(x = time, y = N, color = rate)) +
+  geom_line(size = 1) +
+  geom_point(size =3)
+```
+
+Cobweb plot
+
+```{r}
+ggplot(data.frame(N = (0:30)), aes(x = N))+
+  geom_blank()+
+  stat_function(fun = dF_dN1, color = "black", size = 1.2) +
+  stat_function(fun = equilibrium, color = "black", size = 1.2, linetype = 2)+
+  ggtitle("r = 0.5, k = 10")+
+  xlim(c(0,800))
+
+ggplot(data.frame(N = (0:30)), aes(x = N))+
+  geom_blank()+
+  stat_function(fun = dF_dN2, color = "black", size = 1.2) +
+  stat_function(fun = equilibrium, color = "black", size = 1.2, linetype = 2)+
+  ggtitle("r = 1.5, k = 10")+
+  xlim(c(0,700))
+
+```
+
