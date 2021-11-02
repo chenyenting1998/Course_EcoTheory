@@ -1,0 +1,88 @@
+---
+title: "Lecture_6"
+author: "Chen, Yen-Ting"
+date: "2021/11/2"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Metapopulation lab exercise
+
+```{r}
+pacman::p_load(dplyr, tidyr, ggplot2, deSolve)
+```
+
+This exercise kind of persuades me that this model can actually solve real problems.
+
+$P_{00}$: no plant, untrained soil
+$P_{A0}$: plant alive, untrained soil
+$P_{AA}$: plant alive, trained soil
+$P_{0A}$: plant dead, trained soil
+
+note that p00 + pA0 + pAA + p0A = P = 1 and p00_dt + pA0_dt + pAA_dt + p0A_dt = 0
+
+Probably can test how areas of ecological function changes through time.
+
+Reading assignments only.
+
+```{r}
+# ini
+ini <- c(p00 = 0.25, pA0 = 0.25, pAA = 0.25, p0A = 0.25)
+
+# flow parameters
+parms <- c(dA = 0.1, # soil decay
+           RA = 0.8, # plant rep.
+           mA = 0.1, # plant mortality 
+           CA = 0.5, # soil entrainment
+           alpha = 0.7) # RA modifier
+
+time <- seq(0, 300, 0.1)
+
+# patch occupancy
+# the pAA + p0A term is the fecundity of alive plants
+po_model <- function(time, ini, parms){
+  with(as.list(c(parms, ini)), {
+    p00_dt <- dA * p0A + mA * pA0 - RA * (pAA + p0A) * p00
+    pA0_dt <- RA * (pAA + p0A) * p00 - CA * pA0 - mA * pA0
+    pAA_dt <- CA * pA0 - mA * pAA + RA * (pAA + p0A) * alpha * p0A
+    p0A_dt <- - dA * p0A + mA * pAA - RA * (pAA + p0A) * alpha * p0A
+
+    return(list(c(p00_dt, pA0_dt, pAA_dt, p0A_dt)))
+  })
+}
+
+
+output <- 
+  ode(func = po_model,
+      times = time,
+      parms = parms,
+      y = ini) %>% 
+  data.frame
+
+output_long <- 
+  output %>% 
+  pivot_longer(cols = 2:5, 
+               names_to = "state", 
+               values_to = "values") %>% 
+  mutate(state = factor(state, c("pAA", "pA0", "p0A", "p00")))
+
+
+
+
+head(output)
+```
+
+
+```{r}
+output_long %>% 
+  ggplot() +
+  geom_area(aes(x = time, y = values, fill = state))
+
+output_long %>% 
+  ggplot() +
+  geom_path(aes(x = time, y = values, color = state)) +
+  ylim(c(0,1))
+```
